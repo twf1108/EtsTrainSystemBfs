@@ -1,13 +1,10 @@
 package com.mycompany.etstrainsystem;
-
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -20,99 +17,25 @@ public class App extends Application {
     private List<EdgeView> edges = new ArrayList<>();
     private Random random = new Random();
     private TextArea pathResultArea;
-    private double globalRadius = 25; 
-    
-
-    class NodeView {
-        String name;
-        Circle circle;
-        Text label;
-        double x, y;
-        
-        NodeView(String name, double x, double y) {
-            this.name = name;
-            this.x = x;
-            this.y = y;
-            
-
-            label = new Text(name);
-            label.setFill(Color.BLACK);
-            
-
-            circle = new Circle(x, y, globalRadius);
-            circle.setFill(Color.LIGHTBLUE);
-            circle.setStroke(Color.BLACK);
-            circle.setStrokeWidth(2);
-            
-
-            double textWidth = label.getBoundsInLocal().getWidth();
-            label.setX(x - textWidth / 2);
-            label.setY(y + 5);
-        }
-        
-
-        void updateRadius(double newRadius) {
-            circle.setRadius(newRadius);
-        }
-        
-        void addToPane(Pane pane) {
-            pane.getChildren().addAll(circle, label);
-        }
-        
-        void removeFromPane(Pane pane) {
-            pane.getChildren().removeAll(circle, label);
-        }
-    }
-    
-    class EdgeView {
-        String node1Name, node2Name;
-        Line line;
-        
-        EdgeView(String node1Name, String node2Name) {
-            this.node1Name = node1Name;
-            this.node2Name = node2Name;
-            
-            NodeView n1 = nodes.get(node1Name);
-            NodeView n2 = nodes.get(node2Name);
-            
-            line = new Line(n1.x, n1.y, n2.x, n2.y);
-            line.setStroke(Color.BLACK);
-            line.setStrokeWidth(2);
-        }
-        
-        void addToPane(Pane pane) {
-
-            pane.getChildren().add(line);
-        }
-        
-        void removeFromPane(Pane pane) {
-            pane.getChildren().remove(line);
-        }
-        
-        boolean connectsNode(String nodeName) {
-            return node1Name.equals(nodeName) || node2Name.equals(nodeName);
-        }
-        
-        boolean connects(String n1, String n2) {
-            return (node1Name.equals(n1) && node2Name.equals(n2)) ||
-                   (node1Name.equals(n2) && node2Name.equals(n1));
-        }
-    }
+    private double globalRadius = 25; // Global radius for all circles
     
     @Override
     public void start(Stage primaryStage) {
-
+        // 创建主布局
         BorderPane root = new BorderPane();
         
+        // 创建图形显示区域
         graphPane = new Pane();
         graphPane.setStyle("-fx-background-color: white; -fx-border-color: lightgray;");
         graphPane.setPrefSize(900, 600);
         
+        // 创建控制面板
         VBox controlPanel = createControlPanel();
         
         root.setCenter(graphPane);
         root.setRight(controlPanel);
         
+        // Initialize preset nodes and edges
         initializePresetGraph();
         
         Scene scene = new Scene(root, 1150, 650);
@@ -127,6 +50,7 @@ public class App extends Application {
         controlPanel.setPrefWidth(200);
         controlPanel.setStyle("-fx-background-color: #f0f0f0;");
         
+        // 创建节点部分
         Label nodeLabel = new Label("Node Operations:");
         nodeLabel.setStyle("-fx-font-weight: bold;");
         
@@ -157,6 +81,7 @@ public class App extends Application {
             }
         });
         
+        // 创建边部分
         Label edgeLabel = new Label("Edge Operations:");
         edgeLabel.setStyle("-fx-font-weight: bold;");
         
@@ -194,11 +119,7 @@ public class App extends Application {
             }
         });
         
-        Button clearAllBtn = new Button("Clear All");
-        clearAllBtn.setPrefWidth(150);
-        clearAllBtn.setStyle("-fx-background-color: #ff6b6b; -fx-text-fill: white;");
-        clearAllBtn.setOnAction(e -> clearAll());
-        
+        // BFS Path Finding Section
         Label pathLabel = new Label("BFS Path Finding:");
         pathLabel.setStyle("-fx-font-weight: bold;");
         
@@ -222,16 +143,20 @@ public class App extends Application {
         
         Button clearPathBtn = new Button("Clear Path");
         clearPathBtn.setPrefWidth(150);
-        clearPathBtn.setOnAction(e -> {
-            clearPathHighlight();
-            pathResultArea.clear();
-        });
+        clearPathBtn.setOnAction(e -> clearPathHighlight());
         
-        TextArea pathResultArea = new TextArea();
+        pathResultArea = new TextArea();
         pathResultArea.setEditable(false);
         pathResultArea.setPrefHeight(80);
         pathResultArea.setPromptText("Path result will be displayed here");
         
+        // 清空按钮
+        Button clearAllBtn = new Button("Clear All");
+        clearAllBtn.setPrefWidth(150);
+        clearAllBtn.setStyle("-fx-background-color: #ff6b6b; -fx-text-fill: white;");
+        clearAllBtn.setOnAction(e -> clearAll());
+        
+        // 节点列表显示
         Label nodesListLabel = new Label("Current Nodes:");
         nodesListLabel.setStyle("-fx-font-weight: bold;");
         
@@ -240,8 +165,44 @@ public class App extends Application {
         nodesListArea.setPrefHeight(100);
         nodesListArea.setPromptText("Node list will be displayed here");
         
+        // 更新节点列表的方法
         updateNodesList(nodesListArea);
         
+        // 定期更新节点列表
+        addNodeBtn.setOnAction(e -> {
+            String name = nodeNameField.getText().trim();
+            if (!name.isEmpty()) {
+                createNode(name);
+                nodeNameField.clear();
+                updateNodesList(nodesListArea);
+            } else {
+                showAlert("Please enter node name");
+            }
+        });
+        
+        deleteNodeBtn.setOnAction(e -> {
+            String name = nodeNameField.getText().trim();
+            if (!name.isEmpty()) {
+                deleteNode(name);
+                nodeNameField.clear();
+                updateNodesList(nodesListArea);
+            } else {
+                showAlert("Please enter node name to delete");
+            }
+        });
+        
+        clearPathBtn.setOnAction(e -> {
+            clearPathHighlight();
+            pathResultArea.clear();
+        });
+        
+        clearAllBtn.setOnAction(e -> {
+            clearAll();
+            updateNodesList(nodesListArea);
+            pathResultArea.clear();
+        });
+        
+        // 添加所有组件
         controlPanel.getChildren().addAll(
             nodeLabel,
             nodeNameField,
@@ -267,34 +228,6 @@ public class App extends Application {
             nodesListArea
         );
         
-        addNodeBtn.setOnAction(e -> {
-            String name = nodeNameField.getText().trim();
-            if (!name.isEmpty()) {
-                createNode(name);
-                nodeNameField.clear();
-                updateNodesList(nodesListArea);
-            } else {
-                showAlert("Please enter node name");
-            }
-        });
-        
-        deleteNodeBtn.setOnAction(e -> {
-            String name = nodeNameField.getText().trim();
-            if (!name.isEmpty()) {
-                deleteNode(name);
-                nodeNameField.clear();
-                updateNodesList(nodesListArea);
-            } else {
-                showAlert("Please enter node name to delete");
-            }
-        });
-        
-        clearAllBtn.setOnAction(e -> {
-            clearAll();
-            updateNodesList(nodesListArea);
-            pathResultArea.clear();
-        });
-        
         return controlPanel;
     }
     
@@ -311,6 +244,7 @@ public class App extends Application {
         
         List<String> path = findPathBFS(startNode, endNode);
         
+        // Clear previous path highlighting
         clearPathHighlight();
         
         if (path == null || path.isEmpty()) {
@@ -319,8 +253,10 @@ public class App extends Application {
             return;
         }
         
+        // Highlight the path
         highlightPath(path);
         
+        // Display path result
         String pathStr = String.join(" -> ", path);
         pathResultArea.setText("Path found: " + pathStr + "\nPath length: " + (path.size() - 1) + " edges");
         
@@ -343,6 +279,7 @@ public class App extends Application {
         while (!queue.isEmpty()) {
             String current = queue.poll();
             
+            // Get neighbors of current node
             List<String> neighbors = getNeighbors(current);
             
             for (String neighbor : neighbors) {
@@ -352,13 +289,14 @@ public class App extends Application {
                     queue.offer(neighbor);
                     
                     if (neighbor.equals(end)) {
+                        // Reconstruct path
                         return reconstructPath(parent, start, end);
                     }
                 }
             }
         }
         
-        return null; 
+        return null; // No path found
     }
     
     private List<String> getNeighbors(String nodeName) {
@@ -389,6 +327,7 @@ public class App extends Application {
     }
     
     private void highlightPath(List<String> path) {
+        // Highlight nodes in the path
         for (String nodeName : path) {
             NodeView node = nodes.get(nodeName);
             if (node != null) {
@@ -398,6 +337,7 @@ public class App extends Application {
             }
         }
         
+        // Highlight edges in the path
         for (int i = 0; i < path.size() - 1; i++) {
             String node1 = path.get(i);
             String node2 = path.get(i + 1);
@@ -413,18 +353,18 @@ public class App extends Application {
     }
     
     private void clearPathHighlight() {
-
+        // Reset all nodes to default appearance
         for (NodeView node : nodes.values()) {
             node.circle.setFill(Color.LIGHTBLUE);
             node.circle.setStroke(Color.BLACK);
             node.circle.setStrokeWidth(2);
         }
         
+        // Reset all edges to default appearance
         for (EdgeView edge : edges) {
             edge.line.setStroke(Color.BLACK);
             edge.line.setStrokeWidth(2);
         }
-    
     }
     
     private void updateNodesList(TextArea textArea) {
@@ -451,29 +391,34 @@ public class App extends Application {
             return;
         }
         
+        // Calculate required radius for this node
         Text tempText = new Text(name);
         double textWidth = tempText.getBoundsInLocal().getWidth();
         double requiredRadius = Math.max(25, textWidth / 2 + 10);
         
+        // Update global radius if needed
         if (requiredRadius > globalRadius) {
             globalRadius = requiredRadius;
+            // Update all existing nodes to use the new radius
             updateAllNodeRadii();
+            // Reposition nodes to avoid overlap after radius change
             redistributeNodes();
         }
         
+        // Generate position ensuring no overlap with existing nodes
         double x, y;
         boolean validPosition = false;
         int attempts = 0;
-        double margin = globalRadius + 15; 
+        double margin = globalRadius + 15; // Extra margin for safety
         
         do {
             x = margin + random.nextDouble() * (graphPane.getPrefWidth() - 2 * margin);
             y = margin + random.nextDouble() * (graphPane.getPrefHeight() - 2 * margin);
-            validPosition = isValidPosition(x, y, globalRadius * 2.2); 
+            validPosition = isValidPosition(x, y, globalRadius * 2.2); // 2.2x radius for comfortable spacing
             attempts++;
-        } while (!validPosition && attempts < 100); 
+        } while (!validPosition && attempts < 100); // Prevent infinite loop
         
-        NodeView nodeView = new NodeView(name, x, y);
+        NodeView nodeView = new NodeView(name, x, y, globalRadius);
         nodeView.addToPane(graphPane);
         nodes.put(name, nodeView);
         
@@ -495,8 +440,8 @@ public class App extends Application {
         
         List<NodeView> nodeList = new ArrayList<>(nodes.values());
         double margin = globalRadius + 15;
-        double minDistance = globalRadius * 2.2;
         
+        // Use a simple grid-like redistribution for existing nodes
         int cols = (int) Math.ceil(Math.sqrt(nodeList.size()));
         double spacingX = (graphPane.getPrefWidth() - 2 * margin) / Math.max(1, cols - 1);
         double spacingY = (graphPane.getPrefHeight() - 2 * margin) / Math.max(1, cols - 1);
@@ -504,6 +449,7 @@ public class App extends Application {
         for (int i = 0; i < nodeList.size(); i++) {
             NodeView node = nodeList.get(i);
             
+            // Don't move preset nodes if this is initial setup
             if (isPresetNode(node.name)) continue;
             
             int row = i / cols;
@@ -512,17 +458,11 @@ public class App extends Application {
             double newX = margin + col * spacingX;
             double newY = margin + row * spacingY;
             
-            node.x = newX;
-            node.y = newY;
-            node.circle.setCenterX(newX);
-            node.circle.setCenterY(newY);
-            
-            Text tempText = new Text(node.name);
-            double textWidth = tempText.getBoundsInLocal().getWidth();
-            node.label.setX(newX - textWidth / 2);
-            node.label.setY(newY + 5);
+            // Update node position using the new method
+            node.updatePosition(newX, newY);
         }
         
+        // Update all edges to reflect new positions
         updateAllEdgePositions();
     }
     
@@ -541,10 +481,7 @@ public class App extends Application {
             NodeView n1 = nodes.get(edge.node1Name);
             NodeView n2 = nodes.get(edge.node2Name);
             if (n1 != null && n2 != null) {
-                edge.line.setStartX(n1.x);
-                edge.line.setStartY(n1.y);
-                edge.line.setEndX(n2.x);
-                edge.line.setEndY(n2.y);
+                edge.updatePosition(n1.x, n1.y, n2.x, n2.y);
             }
         }
     }
@@ -556,6 +493,7 @@ public class App extends Application {
             return;
         }
         
+        // 删除所有连接到此节点的边
         edges.removeIf(edge -> {
             if (edge.connectsNode(name)) {
                 edge.removeFromPane(graphPane);
@@ -564,6 +502,7 @@ public class App extends Application {
             return false;
         });
         
+        // 删除节点
         nodeView.removeFromPane(graphPane);
         nodes.remove(name);
         
@@ -586,6 +525,7 @@ public class App extends Application {
             return;
         }
         
+        // 检查边是否已存在
         for (EdgeView edge : edges) {
             if (edge.connects(node1Name, node2Name)) {
                 showAlert("Edge '" + node1Name + " - " + node2Name + "' already exists!");
@@ -593,10 +533,15 @@ public class App extends Application {
             }
         }
         
-        EdgeView edgeView = new EdgeView(node1Name, node2Name);
+        NodeView n1 = nodes.get(node1Name);
+        NodeView n2 = nodes.get(node2Name);
+        
+        EdgeView edgeView = new EdgeView(node1Name, node2Name, n1.x, n1.y, n2.x, n2.y);
+        // Add edge first so it appears behind nodes
         edgeView.addToPane(graphPane);
         edges.add(edgeView);
         
+        // Move nodes to front
         for (NodeView node : nodes.values()) {
             node.circle.toFront();
             node.label.toFront();
@@ -626,16 +571,19 @@ public class App extends Application {
     }
     
     private void clearAll() {
+        // 清除所有边
         for (EdgeView edge : edges) {
             edge.removeFromPane(graphPane);
         }
         edges.clear();
         
+        // 清除所有节点
         for (NodeView node : nodes.values()) {
             node.removeFromPane(graphPane);
         }
         nodes.clear();
         
+        // Reset global radius to default
         globalRadius = 25;
         
         System.out.println("Cleared all nodes and edges");
@@ -648,15 +596,8 @@ public class App extends Application {
         System.out.println("Updated all node radii to: " + globalRadius);
     }
     
-    private void showAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Information");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-    
     private void initializePresetGraph() {
+        // Calculate the maximum required radius for all preset nodes
         String[] presetNodes = {"Johor", "Kuala Lumpur", "Kedah", "Pahang", "Penang"};
         double maxRequiredRadius = 25; // minimum radius
         
@@ -667,29 +608,34 @@ public class App extends Application {
             maxRequiredRadius = Math.max(maxRequiredRadius, requiredRadius);
         }
         
+        // Set global radius to the maximum required
         globalRadius = maxRequiredRadius;
         
         double[][] positions = {
-            {450, 500}, 
-            {450, 300},
-            {200, 150}, 
-            {700, 150}, 
-            {200, 350}  
+            {450, 500}, // Johor - bottom center
+            {450, 300}, // Kuala Lumpur - center
+            {200, 150}, // Kedah - top left
+            {700, 150}, // Pahang - top right  
+            {200, 350}  // Penang - left center
         };
         
+        // Create nodes
         for (int i = 0; i < presetNodes.length; i++) {
             String name = presetNodes[i];
             double x = positions[i][0];
             double y = positions[i][1];
             
-            NodeView nodeView = new NodeView(name, x, y);
+            NodeView nodeView = new NodeView(name, x, y, globalRadius);
             nodeView.addToPane(graphPane);
             nodes.put(name, nodeView);
         }
         
+        // Create preset edges
+        // Johor connects to Kuala Lumpur and Penang
         createPresetEdge("Johor", "Kuala Lumpur");
         createPresetEdge("Johor", "Penang");
         
+        // Kedah connects to Pahang and Johor
         createPresetEdge("Kedah", "Pahang");
         createPresetEdge("Kedah", "Johor");
         
@@ -697,14 +643,26 @@ public class App extends Application {
     }
     
     private void createPresetEdge(String node1Name, String node2Name) {
-        EdgeView edgeView = new EdgeView(node1Name, node2Name);
+        NodeView n1 = nodes.get(node1Name);
+        NodeView n2 = nodes.get(node2Name);
+        
+        EdgeView edgeView = new EdgeView(node1Name, node2Name, n1.x, n1.y, n2.x, n2.y);
         edgeView.addToPane(graphPane);
         edges.add(edgeView);
         
+        // Move nodes to front
         for (NodeView node : nodes.values()) {
             node.circle.toFront();
             node.label.toFront();
         }
+    }
+    
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Information");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
     
     public static void main(String[] args) {

@@ -1,5 +1,5 @@
 com\mycompany\etstrainsystem\App.class
-com\mycompany\etstrainsystem\App$NodeView.class
+com\mycompany\etstrainsystem\EdgeView.class
 module-info.class
-com\mycompany\etstrainsystem\App$EdgeView.class
+com\mycompany\etstrainsystem\NodeView.class
 com\mycompany\etstrainsystem\SystemInfo.class
