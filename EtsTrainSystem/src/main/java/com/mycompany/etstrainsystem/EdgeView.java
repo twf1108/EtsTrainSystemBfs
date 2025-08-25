@@ -18,7 +18,6 @@ public class EdgeView {
     }
     
     public void addToPane(Pane pane) {
-        // Add line first so it appears behind the circles
         pane.getChildren().add(line);
     }
     
