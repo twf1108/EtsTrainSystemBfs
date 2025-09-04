@@ -141,7 +141,7 @@ public class App extends Application {
 
         reachableNodesInOrder.remove(initialState);
 
-        output.append(String.join(", ", reachableNodesInOrder));
+        output.append(String.join(" -> ", reachableNodesInOrder));
 
         System.out.println(output.toString());
     }
