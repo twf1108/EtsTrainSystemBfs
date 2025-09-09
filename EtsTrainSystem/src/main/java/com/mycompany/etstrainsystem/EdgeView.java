@@ -33,11 +33,4 @@ public class EdgeView {
         return (node1Name.equals(n1) && node2Name.equals(n2)) ||
                (node1Name.equals(n2) && node2Name.equals(n1));
     }
-    
-    public void updatePosition(double x1, double y1, double x2, double y2) {
-        line.setStartX(x1);
-        line.setStartY(y1);
-        line.setEndX(x2);
-        line.setEndY(y2);
-    }
 }

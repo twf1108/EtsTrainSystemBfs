@@ -41,14 +41,4 @@ public class NodeView {
         pane.getChildren().removeAll(circle, label);
     }
     
-    public void updatePosition(double newX, double newY) {
-        this.x = newX;
-        this.y = newY;
-        circle.setCenterX(newX);
-        circle.setCenterY(newY);
-
-        double textWidth = label.getBoundsInLocal().getWidth();
-        label.setX(newX - textWidth / 2);
-        label.setY(newY + 5);
-    }
 }
