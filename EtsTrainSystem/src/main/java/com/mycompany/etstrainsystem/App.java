@@ -6,6 +6,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import java.util.concurrent.CountDownLatch;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -71,13 +72,31 @@ public class App extends Application {
                     case "1":
                         System.out.print("Enter node name: ");
                         String nodeName = scanner.nextLine().trim();
-                        Platform.runLater(() -> createNode(nodeName));
+                        CountDownLatch latch = new CountDownLatch(1);
+                        Platform.runLater(() -> {
+                            createNode(nodeName);
+                            latch.countDown(); // Signal completion
+                        });
+                        try {
+                            latch.await(); // Wait for completion
+                        } catch (InterruptedException e) {
+                            System.out.println("Operation interrupted");
+                        }
                         break;
                         
                     case "2":
                         System.out.print("Enter node name to delete: ");
                         String nodeToDelete = scanner.nextLine().trim();
-                        Platform.runLater(() -> deleteNode(nodeToDelete));
+                        CountDownLatch deleteLatch = new CountDownLatch(1);
+                        Platform.runLater(() -> {
+                            deleteNode(nodeToDelete);
+                            deleteLatch.countDown();
+                        });
+                        try {
+                            deleteLatch.await();
+                        } catch (InterruptedException e) {
+                            System.out.println("Operation interrupted");
+                        }
                         break;
                         
                     case "3":
@@ -85,7 +104,16 @@ public class App extends Application {
                         String node1 = scanner.nextLine().trim();
                         System.out.print("Enter second node name: ");
                         String node2 = scanner.nextLine().trim();
-                        Platform.runLater(() -> createEdge(node1, node2));
+                        CountDownLatch edgeLatch = new CountDownLatch(1);
+                        Platform.runLater(() -> {
+                            createEdge(node1, node2);
+                            edgeLatch.countDown();
+                        });
+                        try {
+                            edgeLatch.await();
+                        } catch (InterruptedException e) {
+                            System.out.println("Operation interrupted");
+                        }
                         break;
                         
                     case "4":
@@ -93,7 +121,16 @@ public class App extends Application {
                         String edgeNode1 = scanner.nextLine().trim();
                         System.out.print("Enter second node name: ");
                         String edgeNode2 = scanner.nextLine().trim();
-                        Platform.runLater(() -> deleteEdge(edgeNode1, edgeNode2));
+                        CountDownLatch deleteEdgeLatch = new CountDownLatch(1);
+                        Platform.runLater(() -> {
+                            deleteEdge(edgeNode1, edgeNode2);
+                            deleteEdgeLatch.countDown();
+                        });
+                        try {
+                            deleteEdgeLatch.await();
+                        } catch (InterruptedException e) {
+                            System.out.println("Operation interrupted");
+                        }
                         break;
                         
                     case "5":
@@ -407,7 +444,7 @@ public class App extends Application {
     }
     
     private void initializePresetGraph() {
-        String[] presetNodes = {"Johor", "Kuala Lumpur", "Kedah", "Pahang", "Penang"};
+        String[] presetNodes = {"Ipoh", "Kampar", "Batu Gajah", "Kuala Lumpur", "Seremban"};
         double maxRequiredRadius = 25; 
         
         for (String nodeName : presetNodes) {
@@ -437,10 +474,10 @@ public class App extends Application {
             nodes.put(name, nodeView);
         }
         
-        createPresetEdge("Johor", "Kuala Lumpur");
-        createPresetEdge("Johor", "Penang");
-        createPresetEdge("Kedah", "Pahang");
-        createPresetEdge("Kedah", "Johor");
+        createPresetEdge("Ipoh", "Kampar");
+        createPresetEdge("Ipoh", "Seremban");
+        createPresetEdge("Batu Gajah", "Kuala Lumpur");
+        createPresetEdge("Batu Gajah", "Ipoh");
         
         System.out.println("Initialized preset graph with " + presetNodes.length + " nodes and 4 edges");
     }
